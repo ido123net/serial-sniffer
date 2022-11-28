@@ -34,6 +34,9 @@ def delete_ansi_esc(text: bytes | str):
 @contextlib.contextmanager
 def lock_dev(port: pathlib.Path):
     port_links = [link for link in os.listdir(port.parent) if os.path.samefile(port.parent / link, port)]
+    in_use = any(os.path.exists(f"/var/lock/LCK..{link}") for link in port_links)
+    assert not in_use, f"{port} is in use, check `/var/lock`"
+    # TODO: check if the process still running
     try:
         for link in port_links:
             logger.info(f"locking port / port-link: {link}")
