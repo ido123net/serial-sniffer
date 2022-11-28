@@ -66,10 +66,10 @@ def main() -> int:
         help="Add timestamp to each line",
     )
     args = parser.parse_args()
-    start_sniffing(args.port, args.output, args.delete_esc_chars, args.add_timestamp)
+    sniff_port(args.port, args.output, args.delete_esc_chars, args.add_timestamp)
 
 
-def start_sniffing(
+def sniff_port(
     port: pathlib.Path,
     output: pathlib.Path | None = None,
     delete_esc_chars: bool = True,
@@ -82,7 +82,7 @@ def start_sniffing(
 def _sniff(port, output, delete_esc_chars, add_timestamp):
     logger.info(f"Start sniffing port: {port}")
     serial = PosixPollSerial(
-        port=port,
+        port=str(port),
         baudrate=115200,
         timeout=30,
     )
