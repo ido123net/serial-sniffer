@@ -36,12 +36,14 @@ def lock_dev(port: pathlib.Path):
     port_links = [link for link in os.listdir(port.parent) if os.path.samefile(port.parent / link, port)]
     try:
         for link in port_links:
+            logger.info(f"locking port / port-link: {link}")
             des = os.open(f"/var/lock/LCK..{link}", flags=(os.O_WRONLY | os.O_CREAT | os.O_TRUNC), mode=0o644)
             with open(des, "w") as f:
                 f.write(f"{os.getpid()}\n")
         yield
     finally:
         for link in port_links:
+            logger.info(f"relesing port / port-link: {link}")
             os.unlink(f"/var/lock/LCK..{link}")
 
 
@@ -98,7 +100,6 @@ def read_lines(delete_esc_chars, serial, output_file, add_timestamp):
 
 
 def main() -> int:
-    logging.basicConfig(level=logging.INFO)
     parser = argparse.ArgumentParser(prog="serial-sniffer")
     parser.add_argument(
         "-p",
@@ -127,7 +128,8 @@ def main() -> int:
         help="Add timestamp to each line",
     )
     args = parser.parse_args()
-    sniff_port(args.port, args.output, args.delete_esc_chars, args.add_timestamp)
+    print(f"start sniffing port - {args.port}")
+    return sniff_port(args.port, args.output, args.delete_esc_chars, args.add_timestamp)
 
 
 if __name__ == "__main__":
