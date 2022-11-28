@@ -51,7 +51,9 @@ def sniff_port(
     delete_esc_chars: bool = True,
     add_timestamp: bool = True,
 ) -> int:
-    port, output = pathlib.Path(port), pathlib.Path(output)
+    port = pathlib.Path(port)
+    if output is not None:
+        output = pathlib.Path(output)
     with lock_dev(port):
         return _sniff(port, output, delete_esc_chars, add_timestamp)
 
