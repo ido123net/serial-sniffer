@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import contextlib
 import datetime
 import logging
@@ -8,8 +10,12 @@ import re
 logger = logging.getLogger(__name__)
 
 
+LCK = "/var/lock/LCK..{}"
+
+
 class PortInUse(Exception):
     pass
+
 
 def filter_ansi_escape(line: str):
     ESC_CHARS_RE = r"(\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])|[\x00-\x09]|\x0D)"
@@ -29,32 +35,54 @@ def add_line_timestamp(
 @contextlib.contextmanager
 def lock_dev(port: pathlib.Path):
     port_links = get_all_dir_links(port)
-    pids = []
-    for l in port_links:
-        try:
-            with open(f"/var/lock/LCK..{l}") as f:
-                pid = f.readline().strip()
-                pids.append(int(pid))
-        except FileNotFoundError:
-            continue
+    logger.debug(f"{port_links = }")
+    if in_use(port_links):
+        raise PortInUse(f"Cannot lock {port}.")
+    try:
+        lock_ports(port_links)
+        yield
+    finally:
+        release_ports(port_links)
+
+
+def release_ports(port_links: list[str]) -> None:
+    for port_link in port_links:
+        logger.info(f"relesing port / port-link: {port_link}")
+        os.unlink(LCK.format(port_link))
+
+
+def lock_ports(port_links: list[str]) -> None:
+    for port_link in port_links:
+        logger.info(f"locking port / port-link: {port_link}")
+        with open(LCK.format(port_link), "w") as f:
+            f.write(f"   {os.getpid()}\n")
+
+
+def in_use(port_links: list[str]) -> bool:
+    pids = get_pids_using_port(port_links)
+
     for pid in pids:
         try:
             os.kill(pid, 0)
         except ProcessLookupError:
             pass
         else:
-            raise PortInUse(f"Cannot lock {port} process {pid} is using it.")
-    try:
-        for link in port_links:
-            logger.info(f"locking port / port-link: {link}")
-            des = os.open(f"/var/lock/LCK..{link}", flags=(os.O_WRONLY | os.O_CREAT | os.O_TRUNC), mode=0o644)
-            with open(des, "w") as f:
-                f.write(f"   {os.getpid()}\n")
-        yield
-    finally:
-        for link in port_links:
-            logger.info(f"relesing port / port-link: {link}")
-            os.unlink(f"/var/lock/LCK..{link}")
+            logger.error(f"process {pid} is using the Port!")
+            return False
 
-def get_all_dir_links(file_path: pathlib.Path):
+    return True
+
+def get_pids_using_port(port_links: list[str]) -> list[int]:
+    pids = []
+    for port_link in port_links:
+        try:
+            with open(f"/var/lock/LCK..{port_link}") as f:
+                pid = f.readline().strip()
+                pids.append(int(pid))
+        except FileNotFoundError:
+            continue
+    return pids
+
+
+def get_all_dir_links(file_path: pathlib.Path) -> list[str]:
     return [link for link in os.listdir(file_path.parent) if os.path.samefile(file_path.parent / link, file_path)]

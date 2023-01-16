@@ -1,13 +1,32 @@
 import os
 import pathlib
 import subprocess
-from serial_sniffer.utils import lock_dev
+import tempfile
 
-LCK_PATH = pathlib.Path("/var/lock/")
+import serial_sniffer.utils
 
-def test_lock_dev():
-    port = pathlib.Path("/dev/EPM1")
-    lock_file = LCK_PATH / f"LCK..{port.name}"
-    with lock_dev(port):
-        subprocess.call(["ls", str(LCK_PATH)])
-    # os.unlink(lock_file)
+
+
+def test_get_all_dir_links():
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tmpdir_path = pathlib.Path(tmpdir)
+        tmp_file = tmpdir_path / "tmp"
+        with open(tmp_file, "w") as f:
+            f.write("test\n")
+        os.link(tmp_file, tmpdir_path / "tmp_link")
+        assert serial_sniffer.utils.get_all_dir_links(tmp_file) == ["tmp", "tmp_link"]
+
+def test_lock_dev(monkeypatch):
+    def mock_get_all_dir_links(file_path):
+        return [
+            "TEST",
+            "EQ5_PBCM_0001",
+        ]
+    monkeypatch.setattr(serial_sniffer.utils, "get_all_dir_links", mock_get_all_dir_links)
+    monkeypatch.setattr(serial_sniffer.utils, "in_use", lambda port_links:  False)
+    port = pathlib.Path("/dev/TEST")
+    port_links = serial_sniffer.utils.get_all_dir_links(port)
+    with serial_sniffer.utils.lock_dev(port):
+        for port_link in port_links:
+            assert os.path.isfile(serial_sniffer.utils.LCK.format(port_link))
+    assert not os.path.isfile(serial_sniffer.utils.LCK.format(port_link))
