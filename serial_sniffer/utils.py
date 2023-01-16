@@ -8,6 +8,9 @@ import re
 logger = logging.getLogger(__name__)
 
 
+class PortInUse(Exception):
+    pass
+
 def filter_ansi_escape(line: str):
     ESC_CHARS_RE = r"(\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])|[\x00-\x09]|\x0D)"
     ansi_escape = re.compile(ESC_CHARS_RE)
@@ -25,24 +28,33 @@ def add_line_timestamp(
 
 @contextlib.contextmanager
 def lock_dev(port: pathlib.Path):
-    port_links = [link for link in os.listdir(port.parent) if os.path.samefile(port.parent / link, port)]
+    port_links = get_all_dir_links(port)
+    pids = []
     for l in port_links:
         try:
-            with open(f"/var/lock/LCK..{link}") as f:
-                pid = f.readline()
-        except Exception:
-            raise
-    in_use = any(os.path.exists(f"/var/lock/LCK..{link}") for link in port_links)
-    assert not in_use, f"{port} is in use, check `/var/lock`"
-    # TODO: check if the process still running
+            with open(f"/var/lock/LCK..{l}") as f:
+                pid = f.readline().strip()
+                pids.append(int(pid))
+        except FileNotFoundError:
+            continue
+    for pid in pids:
+        try:
+            os.kill(pid, 0)
+        except ProcessLookupError:
+            pass
+        else:
+            raise PortInUse(f"Cannot lock {port} process {pid} is using it.")
     try:
         for link in port_links:
             logger.info(f"locking port / port-link: {link}")
             des = os.open(f"/var/lock/LCK..{link}", flags=(os.O_WRONLY | os.O_CREAT | os.O_TRUNC), mode=0o644)
             with open(des, "w") as f:
-                f.write(f"{os.getpid()}\n")
+                f.write(f"   {os.getpid()}\n")
         yield
     finally:
         for link in port_links:
             logger.info(f"relesing port / port-link: {link}")
             os.unlink(f"/var/lock/LCK..{link}")
+
+def get_all_dir_links(file_path: pathlib.Path):
+    return [link for link in os.listdir(file_path.parent) if os.path.samefile(file_path.parent / link, file_path)]
