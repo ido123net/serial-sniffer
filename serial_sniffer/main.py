@@ -7,14 +7,12 @@ from typing import Sequence
 
 import serial
 
-from serial_sniffer.sniffer import sniff_port
+from serial_sniffer.sniffer import Sniffer
+
+logger = logging.getLogger("serial_sniffer")
 
 
-def main(argv: Sequence[str] | None = None):
-    logging.basicConfig(
-        level=logging.DEBUG,
-        format="[%(asctime)s] | %(name)s | %(process)d | %(message)s",
-    )
+def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "port",
@@ -39,9 +37,14 @@ def main(argv: Sequence[str] | None = None):
         help="Do not clean ESC chars from lines",
     )
     args = parser.parse_args(argv)
-    ser = serial.Serial(args.port, args.baudrate)
-    sniff_port(ser, add_timestamp=(not args.no_timestamp),
-               clean_line=(not args.raw))
+    logger.debug(args)
+    ser = serial.Serial(str(args.port), args.baudrate)
+    sniffer = Sniffer(
+        ser,
+        add_timestamp=(not args.no_timestamp),
+        clean_line=(not args.raw),
+    )
+    return sniffer.sniff_port()
 
 
 if __name__ == "__main__":

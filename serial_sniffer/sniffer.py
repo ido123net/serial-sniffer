@@ -1,6 +1,6 @@
 from __future__ import annotations
-import io
 
+import io
 import logging
 
 import serial
@@ -24,18 +24,19 @@ class Sniffer:
         self.clean_line = clean_line
         self.stdout = io.StringIO()
 
-    def sniff_port(self):
+    def sniff_port(self) -> int:
         logger.info(f"[start] sniffing port - {serial.port}")
         try:
             self._sniff_port()
         finally:
             logger.info(f"[end] sniffing port - {serial.port}")
+            return 0
 
-    def _sniff_port(self):
+    def _sniff_port(self) -> None:
         for line in reader(serial):
-            line = line.decode("latin-1")
+            line_d = line.decode("latin-1")
             if self.clean_line:
-                line = serial_sniffer.utils.filter_ansi_escape(line)
+                line_d = serial_sniffer.utils.filter_ansi_escape(line_d)
             if self.add_timestamp:
-                line = serial_sniffer.utils.add_line_timestamp(line)
-            self.stdout.write(line)
+                line_d = serial_sniffer.utils.add_line_timestamp(line_d)
+            self.stdout.write(line_d)
