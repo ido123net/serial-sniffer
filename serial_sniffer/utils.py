@@ -7,6 +7,8 @@ import os
 import pathlib
 import re
 
+import psutil
+
 logger = logging.getLogger(__name__)
 
 
@@ -53,32 +55,29 @@ def release_ports(port_links: list[str]) -> None:
 
 def lock_ports(port_links: list[str]) -> None:
     for port_link in port_links:
-        logger.info(f"locking port / port-link: {port_link}")
-        with open(LCK.format(port_link), "w") as f:
-            f.write(f"   {os.getpid()}\n")
+        lock_port(port_link)
+
+
+def lock_port(port_link):
+    logger.info(f"locking port: {port_link}")
+    with open(LCK.format(port_link), "w") as f:
+        f.write(f"   {os.getpid()}\n")
 
 
 def in_use(port_links: list[str]) -> bool:
     pids = get_pids_using_port(port_links)
+    if pids:
+        return any(psutil.pid_exists(pid) for pid in pids)
+    return False
 
-    for pid in pids:
-        try:
-            os.kill(pid, 0)
-        except ProcessLookupError:
-            pass
-        else:
-            logger.error(f"process {pid} is using the Port!")
-            return False
-
-    return True
 
 def get_pids_using_port(port_links: list[str]) -> list[int]:
-    pids = []
+    pids = set()
     for port_link in port_links:
         try:
             with open(f"/var/lock/LCK..{port_link}") as f:
                 pid = f.readline().strip()
-                pids.append(int(pid))
+                pids.add(int(pid))
         except FileNotFoundError:
             continue
     return pids
