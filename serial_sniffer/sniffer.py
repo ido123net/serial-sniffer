@@ -18,11 +18,12 @@ class Sniffer:
         *,
         add_timestamp: bool = True,
         clean_line: bool = True,
+        stdout: io.StringIO | io.TextIOWrapper = io.StringIO(),
     ) -> None:
         self.serial = serial
         self.add_timestamp = add_timestamp
         self.clean_line = clean_line
-        self.stdout = io.StringIO()
+        self.stdout = stdout
 
     def sniff_port(self) -> int:
         logger.info(f"[start] sniffing port - {serial.port}")

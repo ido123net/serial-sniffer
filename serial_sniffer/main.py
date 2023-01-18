@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import logging
 import pathlib
+import sys
 from typing import Sequence
 
 import serial
@@ -35,6 +36,13 @@ def main(argv: Sequence[str] | None = None) -> int:
         "--raw",
         action="store_true",
         help="Do not clean ESC chars from lines",
+    )
+    parser.add_argument(
+        "-o",
+        "--output",
+        help="Path to file to output to",
+        type=argparse.FileType("w"),
+        default=sys.stdout,
     )
     args = parser.parse_args(argv)
     logger.debug(args)
