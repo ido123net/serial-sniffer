@@ -36,7 +36,7 @@ def add_line_timestamp(line: str) -> str:
 @contextlib.contextmanager
 def lock_dev(port: pathlib.Path) -> Generator[None, None, None]:
     port_links = get_all_dir_links(port)
-    logger.debug(f"{port_links = }")
+    logger.debug(f"port_links = {port_links!r}")
     if in_use(port_links):
         raise PortInUse(f"Cannot lock {port}.")
     try:

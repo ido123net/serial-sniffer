@@ -31,7 +31,7 @@ def test_get_all_dir_links():
         with open(tmp_file, "w") as f:
             f.write("test\n")
         os.link(tmp_file, tmpdir_path / "tmp_link")
-        assert utils.get_all_dir_links(tmp_file) == ["tmp", "tmp_link"]
+        assert set(utils.get_all_dir_links(tmp_file)) == {"tmp", "tmp_link"}
 
 
 def test_lock_dev(monkeypatch, port):
