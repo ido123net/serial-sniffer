@@ -1,6 +1,7 @@
+.vscode/
 *.egg-info
 *.py[co]
 /.coverage
 /.tox
 /dist
-.vscode/
+venv/

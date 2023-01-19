@@ -46,13 +46,19 @@ def main(argv: Sequence[str] | None = None) -> int:
     )
     args = parser.parse_args(argv)
     logger.debug(args)
+
     ser = serial.Serial(str(args.port), args.baudrate)
     sniffer = Sniffer(
         ser,
         add_timestamp=(not args.no_timestamp),
         clean_line=(not args.raw),
     )
-    return sniffer.sniff_port()
+
+    with sniffer.sniff_port() as sniffer_proc:
+        try:
+            sniffer_proc.join()
+        finally:
+            return 0
 
 
 if __name__ == "__main__":
