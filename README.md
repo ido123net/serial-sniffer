@@ -1,3 +1,4 @@
+[![build status](https://github.com/ido123net/serial-sniffer/actions/workflows/main.yml/badge.svg)](https://github.com/ido123net/serial-sniffer/actions/workflows/main.yml)
 [![pre-commit.ci status](https://results.pre-commit.ci/badge/github/ido123net/serial-sniffer/main.svg)](https://results.pre-commit.ci/latest/github/ido123net/serial-sniffer/main)
 
 # Serial Sniffer
