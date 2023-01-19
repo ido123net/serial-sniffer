@@ -17,12 +17,14 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "port",
+        metavar="<PORT>",
         help="Port to sniff",
         type=pathlib.Path,
     )
     parser.add_argument(
         "-b",
         "--baudrate",
+        metavar="<baudrate>",
         type=int,
         help="The baudrate for the serials",
         default=115200,
@@ -40,6 +42,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument(
         "-o",
         "--output",
+        metavar="<filename>",
         help="Path to file to output to",
         type=argparse.FileType("w"),
         default=sys.stdout,
