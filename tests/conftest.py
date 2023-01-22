@@ -2,10 +2,8 @@ from __future__ import annotations
 
 import datetime
 import pathlib
-import tempfile
 
 import pytest
-import serial
 from serial_sniffer import utils
 
 
