@@ -27,7 +27,8 @@ def patch_Sniffer(monkeypatch):
 
     monkeypatch.setattr(serial_sniffer.main, "Sniffer", TestSniffer)
     monkeypatch.setattr(
-        serial, "Serial",
+        serial,
+        "Serial",
         lambda *args: serial.serial_for_url("loop://"),
     )
 
