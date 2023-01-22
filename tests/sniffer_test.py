@@ -45,12 +45,14 @@ def test__sniff_port(
     monkeypatch,
     capfd,
     port,
-    patch_Serial,
     patch_datetime_now,
     kwargs,
     expected_output,
 ):
-    ser = serial.Serial(str(port))
+    ser = serial.serial_for_url("loop://", timeout=1)
+    ser.write(b"a\n")
+    ser.write(b"b\n")
+    ser.write(b"c\n")
     sniffer = Sniffer(ser, stdout=sys.stdout, **kwargs)
 
     def my_reader(*args):

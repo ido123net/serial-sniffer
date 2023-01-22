@@ -27,15 +27,3 @@ def port(monkeypatch):
         lambda file_path: ["TEST", "EQ5_PBCM_0001"],
     )
     return pathlib.Path("/dev/TEST")
-
-
-@pytest.fixture
-def patch_Serial(monkeypatch):
-    class MySerial(serial.Serial):
-        def readline(self, *args, **kwargs):
-            return b"Test Line\n"
-
-        def open(self):
-            return tempfile.TemporaryFile()
-
-    monkeypatch.setattr(serial, "Serial", MySerial)
