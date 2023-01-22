@@ -4,18 +4,8 @@ import contextlib
 
 import pytest
 import serial
-
 import serial_sniffer.main
 from serial_sniffer.main import main
-
-
-@pytest.fixture
-def patch_Serial(monkeypatch):
-    class TestSerial:
-        def __init__(self, *args, **kwargs):
-            pass
-
-    monkeypatch.setattr(serial, "Serial", TestSerial)
 
 
 @pytest.fixture
@@ -36,7 +26,12 @@ def patch_Sniffer(monkeypatch):
                 return
 
     monkeypatch.setattr(serial_sniffer.main, "Sniffer", TestSniffer)
+    monkeypatch.setattr(
+        serial,
+        "Serial",
+        lambda *args: serial.serial_for_url("loop://"),
+    )
 
 
-def test_main(patch_Sniffer, patch_Serial):
+def test_main(patch_Sniffer):
     assert main(["/dev/TEST"]) == 0

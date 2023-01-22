@@ -2,11 +2,11 @@ from __future__ import annotations
 
 import os
 import pathlib
+import sys
 import tempfile
 
 import psutil
 import pytest
-
 from serial_sniffer import utils
 
 
@@ -34,6 +34,7 @@ def test_get_all_dir_links():
         assert set(utils.get_all_dir_links(tmp_file)) == {"tmp", "tmp_link"}
 
 
+@pytest.mark.skipif(sys.platform == "win32", reason="Linux specific test")
 def test_lock_dev(monkeypatch, port):
     monkeypatch.setattr(
         utils,
@@ -74,6 +75,7 @@ def test_add_line_timestamp(patch_datetime_now):
     assert utils.add_line_timestamp("Test line\n") == expected
 
 
+@pytest.mark.skipif(sys.platform == "win32", reason="Linux specific test")
 def test_lock_port(port):
     utils.lock_port(port.name)
     port_lck_filename = utils.LCK.format(port.name)
@@ -84,6 +86,7 @@ def test_lock_port(port):
     os.unlink(port_lck_filename)
 
 
+@pytest.mark.skipif(sys.platform == "win32", reason="Linux specific test")
 def test_get_pids_using_port(port_links):
     utils.lock_port(port_links[0])
     assert utils.get_pids_using_port(port_links) == {os.getpid()}

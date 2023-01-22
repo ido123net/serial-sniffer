@@ -7,7 +7,6 @@ import sys
 from typing import Sequence
 
 import serial
-
 from serial_sniffer.sniffer import Sniffer
 
 logger = logging.getLogger("serial_sniffer")

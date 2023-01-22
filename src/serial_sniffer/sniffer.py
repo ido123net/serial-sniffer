@@ -4,11 +4,11 @@ import contextlib
 import logging
 import multiprocessing
 import sys
+from multiprocessing.synchronize import Event
 from typing import Generator
 from typing import TextIO
 
 import serial
-
 import serial_sniffer.utils
 from serial_sniffer.serial_reader import reader
 
@@ -29,6 +29,7 @@ class Sniffer:
         self.clean_line = clean_line
         self.stdout = stdout
         self.process: multiprocessing.Process | None = None
+        self.event: Event | None = None
 
     @contextlib.contextmanager
     def sniff_port(self) -> Generator[multiprocessing.Process, None, None]:
@@ -44,10 +45,10 @@ class Sniffer:
 
     def start_sniffing(self) -> None:
         self.event = multiprocessing.Event()
+        assert isinstance(self.event, Event)
         self.process = multiprocessing.Process(
             target=self._sniff_port,
             daemon=True,
-            args=(self.event,),
         )
         self.process.start()
 
@@ -56,7 +57,7 @@ class Sniffer:
             self.process.kill()
 
     def _sniff_port(self) -> None:
-        for line in reader(self.serial):
+        for line in reader(self.serial, self.event):
             line_d = line.decode("latin-1")
             if self.clean_line:
                 line_d = serial_sniffer.utils.filter_ansi_escape(line_d)
