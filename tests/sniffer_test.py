@@ -5,7 +5,6 @@ import sys
 
 import pytest
 import serial
-
 import serial_sniffer.sniffer
 from serial_sniffer.sniffer import Sniffer
 
@@ -16,8 +15,11 @@ def test_sniffer_init():
     sniffer.stop_sniffing()
 
 
-def test_sniff_port(port, patch_Serial):
-    ser = serial.Serial(str(port))
+def test_sniff_port():
+    ser = serial.serial_for_url("loop://", timeout=1)
+    ser.write(b"a\n")
+    ser.write(b"b\n")
+    ser.write(b"c\n")
     sniffer = Sniffer(ser, add_timestamp=False)
     with sniffer.sniff_port() as sniff:
         assert isinstance(sniff, multiprocessing.Process)

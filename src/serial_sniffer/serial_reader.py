@@ -10,6 +10,6 @@ def reader(
     serial: serial.Serial,
     event: Event | None = None,
 ) -> Generator[bytes, None, None]:
-    if event is None or not event.is_set():
+    while event is None or not event.is_set():
         yield serial.readline()
     return

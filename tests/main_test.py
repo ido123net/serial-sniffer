@@ -3,19 +3,8 @@ from __future__ import annotations
 import contextlib
 
 import pytest
-import serial
-
 import serial_sniffer.main
 from serial_sniffer.main import main
-
-
-@pytest.fixture
-def patch_Serial(monkeypatch):
-    class TestSerial:
-        def __init__(self, *args, **kwargs):
-            pass
-
-    monkeypatch.setattr(serial, "Serial", TestSerial)
 
 
 @pytest.fixture
