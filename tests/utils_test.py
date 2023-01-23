@@ -26,7 +26,7 @@ def port_links(port):
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="Linux specific test")
-def test_get_all_dir_links():
+def test_get_all_dir_links_linux():  # pragma: win32 no cover
     with tempfile.TemporaryDirectory() as tmpdir:
         tmpdir_path = pathlib.Path(tmpdir)
         tmp_file = tmpdir_path / "tmp"
@@ -36,8 +36,13 @@ def test_get_all_dir_links():
         assert set(utils.get_all_dir_links(tmp_file)) == {"tmp", "tmp_link"}
 
 
+@pytest.mark.skipif(sys.platform == "linux", reason="Windows specific test")
+def test_get_all_dir_links_windows():
+    assert utils.get_all_dir_links(pathlib.Path("/fake/path")) == []
+
+
 @pytest.mark.skipif(sys.platform == "win32", reason="Linux specific test")
-def test_lock_dev(monkeypatch, port):
+def test_lock_dev(monkeypatch, port):  # pragma: win32 no cover
     monkeypatch.setattr(
         utils,
         "in_use",
@@ -78,7 +83,7 @@ def test_add_line_timestamp(patch_datetime_now):
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="Linux specific test")
-def test_lock_port(port):
+def test_lock_port(port):  # pragma: win32 no cover
     utils.lock_port(port.name)
     port_lck_filename = utils.LCK.format(port.name)
     assert os.path.isfile(port_lck_filename)
@@ -89,7 +94,7 @@ def test_lock_port(port):
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="Linux specific test")
-def test_get_pids_using_port(port_links):
+def test_get_pids_using_port(port_links):  # pragma: win32 no cover
     utils.lock_port(port_links[0])
     assert utils.get_pids_using_port(port_links) == {os.getpid()}
 

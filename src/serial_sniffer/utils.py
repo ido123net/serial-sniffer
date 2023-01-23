@@ -40,25 +40,25 @@ def lock_dev(port: pathlib.Path) -> Generator[None, None, None]:
     logger.debug(f"port_links = {port_links!r}")
     if in_use(port_links):
         raise PortInUse(f"Cannot lock {port}.")
-    try:
+    try:  # pragma: linux cover
         lock_ports(port_links)
         yield
-    finally:
+    finally:  # pragma: linux cover
         release_ports(port_links)
 
 
 def release_ports(port_links: list[str]) -> None:
-    for port_link in port_links:
+    for port_link in port_links:  # pragma: linux cover
         logger.info(f"relesing port / port-link: {port_link}")
         os.unlink(LCK.format(port_link))
 
 
 def lock_ports(port_links: list[str]) -> None:
     for port_link in port_links:
-        lock_port(port_link)
+        lock_port(port_link)  # pragma: linux cover
 
 
-def lock_port(port_link: str) -> None:
+def lock_port(port_link: str) -> None:  # pragma: linux cover
     logger.info(f"locking port: {port_link}")
     with open(LCK.format(port_link), "w") as f:
         f.write(f"   {os.getpid()}\n")
@@ -71,7 +71,9 @@ def in_use(port_links: list[str]) -> bool:
     return False
 
 
-def get_pids_using_port(port_links: list[str]) -> set[int]:
+def get_pids_using_port(
+    port_links: list[str],
+) -> set[int]:  # pragma: linux cover
     pids = set()
     for port_link in port_links:
         try:
@@ -86,8 +88,9 @@ def get_pids_using_port(port_links: list[str]) -> set[int]:
 def get_all_dir_links(file_path: pathlib.Path) -> list[str]:
     if sys.platform == "win32":  # pragma: win32 cover
         return []
-    return [
-        link
-        for link in os.listdir(file_path.parent)
-        if os.path.samefile(file_path.parent / link, file_path)
-    ]
+    else:  # pragma: linux cover
+        return [
+            link
+            for link in os.listdir(file_path.parent)
+            if os.path.samefile(file_path.parent / link, file_path)
+        ]
