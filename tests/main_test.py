@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import contextlib
-
 import pytest
 import serial
 import serial_sniffer.main
@@ -10,20 +8,15 @@ from serial_sniffer.main import main
 
 @pytest.fixture
 def patch_Sniffer(monkeypatch):
-    class TestProcess:
-        def join(self):
+    class TestSniffer:
+        def __init__(self, ser, *args, **kwargs):
+            self.serial = ser
+
+        def start_sniffing(self):
             return
 
-    class TestSniffer:
-        def __init__(*args, **kwargs):
-            pass
-
-        @contextlib.contextmanager
-        def sniff_port(self):
-            try:
-                yield TestProcess()
-            finally:
-                return
+        def stop_sniffing(self):
+            return
 
     monkeypatch.setattr(serial_sniffer.main, "Sniffer", TestSniffer)
     monkeypatch.setattr(

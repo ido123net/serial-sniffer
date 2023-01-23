@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import multiprocessing
 import sys
 
 import pytest
@@ -9,20 +8,19 @@ import serial_sniffer.sniffer
 from serial_sniffer.sniffer import Sniffer
 
 
-def test_sniffer_init():
-    ser = serial.Serial()
+def test_sniff_for(ser):
     sniffer = Sniffer(ser)
-    sniffer.stop_sniffing()
+    print(sniffer.sniff_for(3))
 
 
-def test_sniff_port():
-    ser = serial.serial_for_url("loop://", timeout=1)
-    ser.write(b"a\n")
-    ser.write(b"b\n")
-    ser.write(b"c\n")
-    sniffer = Sniffer(ser, add_timestamp=False)
-    with sniffer.sniff_port() as sniff:
-        assert isinstance(sniff, multiprocessing.Process)
+def test_sniffer_lock_ports(monkeypatch, port, patch_Serial):
+    monkeypatch.setattr(
+        serial_sniffer.sniffer,
+        "get_all_dir_links",
+        lambda file_path: ["TEST", "EQ5_PBCM_0001"],
+    )
+    ser = serial.Serial(str(port))
+    Sniffer(ser, lock_ports=True)
 
 
 @pytest.mark.parametrize(
@@ -44,21 +42,18 @@ def test_sniff_port():
 def test__sniff_port(
     monkeypatch,
     capfd,
+    ser,
     port,
     patch_datetime_now,
     kwargs,
     expected_output,
 ):
-    ser = serial.serial_for_url("loop://", timeout=1)
-    ser.write(b"a\n")
-    ser.write(b"b\n")
-    ser.write(b"c\n")
     sniffer = Sniffer(ser, stdout=sys.stdout, **kwargs)
 
     def my_reader(*args):
         yield b"\x1b[31m\x00Test Line - sniff_port\x1b[0m\r\n"
 
     monkeypatch.setattr(serial_sniffer.sniffer, "reader", my_reader)
-    sniffer._sniff_port()
+    sniffer._sniff()
     out, _ = capfd.readouterr()
     assert out == expected_output

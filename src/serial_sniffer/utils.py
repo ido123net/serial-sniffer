@@ -6,6 +6,7 @@ import logging
 import os
 import pathlib
 import re
+import sys
 from typing import Generator
 
 import psutil
@@ -83,6 +84,8 @@ def get_pids_using_port(port_links: list[str]) -> set[int]:
 
 
 def get_all_dir_links(file_path: pathlib.Path) -> list[str]:
+    if sys.platform == "win32":  # pragma: win32 cover
+        return []
     return [
         link
         for link in os.listdir(file_path.parent)

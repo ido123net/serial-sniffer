@@ -8,6 +8,7 @@ from typing import Sequence
 
 import serial
 from serial_sniffer.sniffer import Sniffer
+from serial_sniffer.tools import sniff_one_ctx
 
 logger = logging.getLogger("serial_sniffer")
 
@@ -56,7 +57,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         clean_line=(not args.raw),
     )
 
-    with sniffer.sniff_port() as sniffer_proc:
+    with sniff_one_ctx(sniffer) as sniffer_proc:
         try:
             sniffer_proc.join()
         finally:
