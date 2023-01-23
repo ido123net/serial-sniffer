@@ -4,4 +4,4 @@
 /.coverage
 /.tox
 /dist
-venv/
+*venv*/

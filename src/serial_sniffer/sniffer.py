@@ -1,16 +1,21 @@
 from __future__ import annotations
 
-import contextlib
 import logging
-import multiprocessing
+import pathlib
 import sys
-from multiprocessing.synchronize import Event
-from typing import Generator
+import threading
+import time
+from io import StringIO
+from threading import Event
 from typing import TextIO
 
 import serial
-import serial_sniffer.utils
-from serial_sniffer.serial_reader import reader
+
+from serial_sniffer.utils import add_line_timestamp
+from serial_sniffer.utils import filter_ansi_escape
+from serial_sniffer.utils import get_all_dir_links
+from serial_sniffer.utils import lock_ports
+from serial_sniffer.utils import release_ports
 
 logger = logging.getLogger(__name__)
 
@@ -18,50 +23,59 @@ logger = logging.getLogger(__name__)
 class Sniffer:
     def __init__(
         self,
-        serial: serial.Serial,
+        ser: serial.Serial,
         *,
         add_timestamp: bool = True,
         clean_line: bool = True,
         stdout: TextIO = sys.stdout,
+        lock_ports: bool = False,
+        event: Event | None = None,
     ) -> None:
-        self.serial = serial
+        self.serial = ser
         self.add_timestamp = add_timestamp
         self.clean_line = clean_line
         self.stdout = stdout
-        self.process: multiprocessing.Process | None = None
-        self.event: Event | None = None
+        if lock_ports:
+            self.port_links = get_all_dir_links(pathlib.Path(ser.port))
+        else:
+            self.port_links = []
 
-    @contextlib.contextmanager
-    def sniff_port(self) -> Generator[multiprocessing.Process, None, None]:
-        logger.info(f"[start] sniffing port - {self.serial.port}")
-        try:
-            self.start_sniffing()
-            assert isinstance(self.process, multiprocessing.Process)
-            assert self.process.is_alive()
-            yield self.process
-        finally:
-            self.stop_sniffing()
-            logger.info(f"[end] sniffing port - {self.serial.port}")
+        # sniffer Process
+        self.event = event
 
-    def start_sniffing(self) -> None:
-        self.event = multiprocessing.Event()
+    def start_sniffing(self) -> threading.Thread:
+        lock_ports(self.port_links)
+        self.event = Event()
         assert isinstance(self.event, Event)
-        self.process = multiprocessing.Process(
-            target=self._sniff_port,
+        self.thread = threading.Thread(
+            target=self._sniff,
             daemon=True,
         )
-        self.process.start()
+        self.thread.start()
+        return self.thread
 
     def stop_sniffing(self) -> None:
-        if self.process is not None:
-            self.process.kill()
+        assert isinstance(self.event, Event)
+        assert isinstance(self.thread, threading.Thread)
+        self.event.set()
+        self.thread.join(timeout=5)
+        release_ports(self.port_links)
 
-    def _sniff_port(self) -> None:
-        for line in reader(self.serial, self.event):
-            line_d = line.decode("latin-1")
-            if self.clean_line:
-                line_d = serial_sniffer.utils.filter_ansi_escape(line_d)
+    def sniff_for(self, secs: float) -> str:
+        self.stdout = StringIO()
+        self.start_sniffing()
+        time.sleep(secs)
+        self.stop_sniffing()
+        return self.stdout.getvalue()
+
+    def _sniff(self) -> None:
+        while self.event is None or not self.event.is_set():
+            line = self.serial.readline()
+            line_decoded = line.decode("utf-8")
+            if self.clean_line:  # pragma: no cover
+                line_decoded = filter_ansi_escape(line_decoded)
             if self.add_timestamp:
-                line_d = serial_sniffer.utils.add_line_timestamp(line_d)
-            self.stdout.write(line_d)
-            self.stdout.flush()
+                line_decoded = add_line_timestamp(line_decoded)
+            if line:
+                self.stdout.write(line_decoded)
+                self.stdout.flush()

@@ -4,6 +4,8 @@ import datetime
 import pathlib
 
 import pytest
+import serial
+
 from serial_sniffer import utils
 
 
@@ -25,3 +27,21 @@ def port(monkeypatch):
         lambda file_path: ["TEST", "EQ5_PBCM_0001"],
     )
     return pathlib.Path("/dev/TEST")
+
+
+@pytest.fixture
+def ser():
+    ser = serial.serial_for_url("loop://", timeout=0.1)
+    ser.write(b"a\n")
+    ser.write(b"b\n")
+    ser.write(b"c\n")
+    return ser
+
+
+@pytest.fixture
+def patch_Serial(monkeypatch):
+    class MySerial(serial.Serial):
+        def open(self):
+            return
+
+    monkeypatch.setattr(serial, "Serial", MySerial)
