@@ -5,6 +5,7 @@ import pathlib
 
 import pytest
 import serial
+
 from serial_sniffer import utils
 
 

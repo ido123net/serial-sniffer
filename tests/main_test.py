@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import pytest
 import serial
+
 import serial_sniffer.main
 from serial_sniffer.main import main
 

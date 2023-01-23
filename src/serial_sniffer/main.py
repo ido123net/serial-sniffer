@@ -7,6 +7,7 @@ import sys
 from typing import Sequence
 
 import serial
+
 from serial_sniffer.sniffer import Sniffer
 from serial_sniffer.tools import sniff_one_ctx
 

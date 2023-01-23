@@ -10,6 +10,7 @@ from threading import Event
 from typing import TextIO
 
 import serial
+
 from serial_sniffer.utils import add_line_timestamp
 from serial_sniffer.utils import filter_ansi_escape
 from serial_sniffer.utils import get_all_dir_links

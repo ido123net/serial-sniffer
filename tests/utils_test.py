@@ -7,6 +7,7 @@ import tempfile
 
 import psutil
 import pytest
+
 from serial_sniffer import utils
 
 
@@ -24,6 +25,7 @@ def port_links(port):
     return utils.get_all_dir_links(port)
 
 
+@pytest.mark.skipif(sys.platform == "win32", reason="Linux specific test")
 def test_get_all_dir_links():
     with tempfile.TemporaryDirectory() as tmpdir:
         tmpdir_path = pathlib.Path(tmpdir)
