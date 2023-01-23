@@ -37,7 +37,7 @@ def test_get_all_dir_links_linux():  # pragma: win32 no cover
 
 
 @pytest.mark.skipif(sys.platform == "linux", reason="Windows specific test")
-def test_get_all_dir_links_windows():
+def test_get_all_dir_links_windows():  # pragma: linux no cover
     assert utils.get_all_dir_links(pathlib.Path("/fake/path")) == []
 
 
