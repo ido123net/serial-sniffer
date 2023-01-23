@@ -30,7 +30,7 @@ def port(monkeypatch):
 
 @pytest.fixture
 def ser():
-    ser = serial.serial_for_url("loop://", timeout=3)
+    ser = serial.serial_for_url("loop://", timeout=0.1)
     ser.write(b"a\n")
     ser.write(b"b\n")
     ser.write(b"c\n")

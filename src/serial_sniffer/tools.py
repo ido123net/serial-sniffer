@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import contextlib
 import logging
-import multiprocessing
+import threading
 from typing import Generator
 
 from serial_sniffer.sniffer import Sniffer
@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 @contextlib.contextmanager
 def sniff_one_ctx(
     sniffer: Sniffer,
-) -> Generator[multiprocessing.Process, None, None]:
+) -> Generator[threading.Thread, None, None]:
     logger.info(f"[start] sniffing port - {sniffer.serial.port}")
     try:
         yield sniffer.start_sniffing()
@@ -25,7 +25,7 @@ def sniff_one_ctx(
 @contextlib.contextmanager
 def sniff_many_ctx(
     sniffers: list[Sniffer],
-) -> Generator[list[multiprocessing.Process], None, None]:
+) -> Generator[list[threading.Thread], None, None]:
     _ports = [sniffer.serial.port for sniffer in sniffers]
     logger.debug(f"[start] sniffing ports - {_ports}")
     try:

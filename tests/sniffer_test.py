@@ -9,8 +9,8 @@ from serial_sniffer.sniffer import Sniffer
 
 
 def test_sniff_for(ser):
-    sniffer = Sniffer(ser)
-    print(sniffer.sniff_for(3))
+    sniffer = Sniffer(ser, add_timestamp=False)
+    assert sniffer.sniff_for(0.1) == "a\nb\nc\n"
 
 
 def test_sniffer_lock_ports(monkeypatch, port, patch_Serial):
@@ -28,32 +28,15 @@ def test_sniffer_lock_ports(monkeypatch, port, patch_Serial):
     (
         (
             {},
-            "[17:05:55.123456] Test Line - sniff_port\n",
-        ),
-        (
-            {
-                "add_timestamp": False,
-                "clean_line": False,
-            },
-            "\x1b[31m\x00Test Line - sniff_port\x1b[0m\r\n",
+            "[17:05:55.123456] a\n[17:05:55.123456] b\n[17:05:55.123456] c\n",
         ),
     ),
 )
-def test__sniff_port(
-    monkeypatch,
-    capfd,
+def test_sniff(
     ser,
-    port,
     patch_datetime_now,
     kwargs,
     expected_output,
 ):
     sniffer = Sniffer(ser, stdout=sys.stdout, **kwargs)
-
-    def my_reader(*args):
-        yield b"\x1b[31m\x00Test Line - sniff_port\x1b[0m\r\n"
-
-    monkeypatch.setattr(serial_sniffer.sniffer, "reader", my_reader)
-    sniffer._sniff()
-    out, _ = capfd.readouterr()
-    assert out == expected_output
+    assert sniffer.sniff_for(0.1) == expected_output
