@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import threading
+from pathlib import Path
 
 from serial_sniffer.sniffer import Sniffer
 from serial_sniffer.tools import sniff_many_ctx
@@ -9,7 +10,7 @@ from serial_sniffer.tools import sniff_one_ctx
 
 
 def test_sniff_one_ctx(ser):
-    sniffer = Sniffer(ser, add_timestamp=False, stdout=open(os.devnull, "w"))
+    sniffer = Sniffer(ser, add_timestamp=False, stdout=Path(os.devnull))
     with sniff_one_ctx(sniffer) as sniff:
         assert isinstance(sniff, threading.Thread)
 
